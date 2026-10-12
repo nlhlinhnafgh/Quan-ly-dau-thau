@@ -52,7 +52,7 @@
                                     <option value="Phòng Đấu thầu 2">Phòng Đấu thầu 2</option>
                                 </select>
                             </div>
-                            <button onclick="takeControl()" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <button id="btnTake" class="btn btn-primary w-100 py-2 fw-semibold">
                                 Đăng ký sử dụng / Đang đăng nhập
                             </button>
                         </div>
@@ -61,7 +61,7 @@
                             <div class="alert alert-warning text-center" role="alert">
                                 Tài khoản đang được sử dụng. Phải nhập đúng tên người đang dùng mới có thể kết thúc phiên!
                             </div>
-                            <button onclick="releaseControl()" class="btn btn-danger w-100 py-2 fw-semibold">
+                            <button id="btnRelease" class="btn btn-danger w-100 py-2 fw-semibold">
                                 Đã xong - Kết thúc phiên đăng nhập
                             </button>
                         </div>
@@ -81,7 +81,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Cấu hình kết nối Firebase của bạn
         const firebaseConfig = {
             databaseURL: "https://quan-ly-dau-thau-fa988-default-rtdb.asia-southeast1.firebasedatabase.app/" 
         };
@@ -92,7 +91,6 @@
 
         let globalState = { isBusy: false, name: '', room: '', time: '' };
 
-        // Lắng nghe thay đổi dữ liệu thời gian thực cho tất cả mọi người đang mở web
         onValue(stateRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -104,7 +102,8 @@
             }
         });
 
-        window.takeControl = async function() {
+        // Gán sự kiện trực tiếp bằng Javascript thuần để tránh bị kẹt cache trên GitHub
+        document.getElementById('btnTake').addEventListener('click', async function() {
             const name = document.getElementById('fullName').value.trim();
             const room = document.getElementById('roomName').value;
 
@@ -127,15 +126,16 @@
             } catch (e) {
                 alert('Lỗi kết nối, vui lòng thử lại!');
             }
-        }
+        });
 
-        window.releaseControl = async function() {
-            // Hiển thị ngay bảng yêu cầu nhập tên xác thực, không dùng confirm thông thường
-            const inputName = prompt(`BẢO VỆ PHIÊN LÀM VIỆC:\nVui lòng nhập chính xác Họ và tên người đang dùng ("${globalState.name}") để kết thúc phiên:`);
+        document.getElementById('btnRelease').addEventListener('click', async function() {
+            // Hiện ngay lập tức hộp thoại nhập tên bảo vệ phiên
+            let currentOwner = globalState.name || "Người dùng";
+            let inputName = prompt(`XÁC THỰC KẾT THÚC PHIÊN:\nVui lòng nhập chính xác Họ và tên của người đang dùng ("${currentOwner}") để mở khóa:`);
             
             if (inputName === null) return; // Người dùng bấm Hủy
 
-            if (inputName.trim().toLowerCase() !== globalState.name.toLowerCase()) {
+            if (inputName.trim().toLowerCase() !== currentOwner.toLowerCase()) {
                 alert('Tên xác nhận không chính xác! Bạn không có quyền kết thúc phiên của người khác.');
                 return;
             }
@@ -151,7 +151,7 @@
             } catch (e) {
                 alert('Lỗi kết nối, vui lòng thử lại!');
             }
-        }
+        });
 
         function updateUI(state) {
             const statusCard = document.getElementById('statusCard');
