@@ -3,12 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý tài khoản Đấu thầu quốc gia</title>
+    <title>Hệ Thống Quản Lý Tài Khoản Đấu Thầu</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-status { transition: all 0.3s ease; }
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        .main-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+        }
+        .status-box {
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        .btn-custom {
+            border-radius: 0.50rem;
+            padding: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .info-pill {
+            background-color: rgba(0, 0, 0, 0.03);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -19,65 +47,89 @@
                 
                 <!-- Tiêu đề -->
                 <div class="text-center mb-4">
-                    <h2 class="fw-bold text-primary">Hệ Thống Đấu Thầu Quốc Gia</h2>
-                    <p class="text-muted">Phòng Đấu thầu 1 & Phòng Đấu thầu 2</p>
+                    <div class="mb-2">
+                        <i class="fa-solid fa-building-shield text-primary fs-1"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark">Hệ Thống Đấu Thầu Quốc Gia</h2>
+                    <p class="text-muted small">Quản lý chia sẻ tài khoản chung giữa Phòng Đấu thầu 1 & 2</p>
                 </div>
 
                 <!-- Thẻ hiển thị trạng thái -->
-                <div id="statusCard" class="card shadow-sm card-status mb-4 border-success">
-                    <div class="card-body text-center p-4">
-                        <h4 class="card-title mb-3">Trạng thái tài khoản:</h4>
-                        <div id="statusBadge" class="badge bg-success fs-5 p-3 mb-3 w-100">ĐANG TRỐNG - Có thể đăng nhập</div>
+                <div class="card main-card mb-4">
+                    <div class="card-body p-4 text-center">
+                        <h5 class="text-uppercase text-muted fw-bold fs-6 mb-3">Trạng thái tài khoản</h5>
                         
-                        <div id="userInfo" class="text-muted mb-2" style="display: none;">
-                            <p class="mb-1">Người đang dùng: <strong id="currentUserName" class="text-dark"></strong></p>
-                            <p class="mb-1">Thuộc phòng: <strong id="currentUserRoom" class="text-dark"></strong></p>
-                            <p class="mb-1">Thời điểm vào: <strong id="currentTime" class="text-dark"></strong></p>
-                            <p class="mb-0 text-danger fw-semibold">⏱️ Thời gian đã dùng: <span id="elapsedTime">0 phút 0 giây</span></p>
+                        <div id="statusBadge" class="p-3 rounded-3 text-white fw-bold fs-5 mb-3 shadow-sm bg-success">
+                            <i class="fa-solid fa-circle-check me-2"></i> ĐANG TRỐNG - Có thể đăng nhập
+                        </div>
+                        
+                        <div id="userInfo" class="text-start mt-3" style="display: none;">
+                            <div class="info-pill d-flex justify-content-between align-items-center">
+                                <span class="text-muted"><i class="fa-solid fa-user me-2"></i>Người dùng:</span>
+                                <strong id="currentUserName" class="text-dark"></strong>
+                            </div>
+                            <div class="info-pill d-flex justify-content-between align-items-center">
+                                <span class="text-muted"><i class="fa-solid fa-door-open me-2"></i>Phòng ban:</span>
+                                <strong id="currentUserRoom" class="text-dark"></strong>
+                            </div>
+                            <div class="info-pill d-flex justify-content-between align-items-center">
+                                <span class="text-muted"><i class="fa-solid fa-clock me-2"></i>Bắt đầu lúc:</span>
+                                <strong id="currentTime" class="text-dark"></strong>
+                            </div>
+                            <div class="info-pill d-flex justify-content-between align-items-center bg-danger-subtle">
+                                <span class="text-danger fw-semibold"><i class="fa-solid fa-stopwatch me-2"></i>Thời gian đã dùng:</span>
+                                <strong id="elapsedTime" class="text-danger fs-6">0 phút 0 giây</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Form thao tác -->
-                <div class="card shadow-sm">
+                <div class="card main-card">
                     <div class="card-body p-4">
                         <div id="actionForm">
                             <div class="mb-3">
-                                <label for="fullName" class="form-label fw-semibold">Họ và tên người dùng:</label>
-                                <input type="text" class="form-control" id="fullName" placeholder="Ví dụ: Nguyễn Văn A">
+                                <label for="fullName" class="form-label fw-semibold text-secondary">Họ và tên người đăng nhập:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fa-solid fa-user-pen"></i></span>
+                                    <input type="text" class="form-control" id="fullName" placeholder="Ví dụ: Nguyễn Văn A">
+                                </div>
                             </div>
                             <div class="mb-3">
-                                <label for="roomName" class="form-label fw-semibold">Phòng ban:</label>
-                                <select class="form-select" id="roomName">
-                                    <option value="Phòng Đấu thầu 1">Phòng Đấu thầu 1</option>
-                                    <option value="Phòng Đấu thầu 2">Phòng Đấu thầu 2</option>
-                                </select>
+                                <label for="roomName" class="form-label fw-semibold text-secondary">Chọn phòng của bạn:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fa-solid fa-building"></i></span>
+                                    <select class="form-select" id="roomName">
+                                        <option value="Phòng Đấu thầu 1">Phòng Đấu thầu 1</option>
+                                        <option value="Phòng Đấu thầu 2">Phòng Đấu thầu 2</option>
+                                    </select>
+                                </div>
                             </div>
-                            <button id="btnTake" class="btn btn-primary w-100 py-2 fw-semibold">
-                                Đăng ký sử dụng / Đang đăng nhập
+                            <button id="btnTake" class="btn btn-primary w-100 btn-custom shadow-sm">
+                                <i class="fa-solid fa-right-to-bracket me-2"></i> Đăng Ký Sử Dụng Tài Khoản
                             </button>
                         </div>
 
                         <div id="releaseForm" style="display: none;">
-                            <div class="alert alert-warning text-center" role="alert">
-                                Tài khoản đang được sử dụng. Phải nhập đúng tên người đang dùng mới có thể kết thúc phiên!
+                            <div class="alert alert-warning border-0 shadow-sm text-center mb-3" role="alert">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> Tài khoản đang bận. Nhập đúng tên để kết thúc phiên!
                             </div>
-                            <button id="btnRelease" class="btn btn-danger w-100 py-2 fw-semibold">
-                                Đã xong - Kết thúc phiên đăng nhập
+                            <button id="btnRelease" class="btn btn-danger w-100 btn-custom shadow-sm">
+                                <i class="fa-solid fa-power-off me-2"></i> Đã Xong - Kết Thúc Phiên
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="text-center mt-3 text-muted small">
-                    <p>Hệ thống tự động đồng bộ tức thì cho tất cả mọi người.</p>
+                <div class="text-center mt-4 text-muted small">
+                    <p><i class="fa-solid fa-shield-halved me-1"></i> Hệ thống đồng bộ thông minh thời gian thực giữa các phòng</p>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK (Realtime Database trực tuyến) -->
+    <!-- Firebase SDK & Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -104,11 +156,8 @@
             }
         });
 
-        // Hàm chạy đồng hồ đếm thời gian
         function startTimer(startTimestamp) {
             if (timerInterval) clearInterval(timerInterval);
-            
-            // Nếu không có timestamp thì lấy thời gian hiện tại
             const start = startTimestamp || Date.now();
 
             timerInterval = setInterval(() => {
@@ -184,16 +233,14 @@
         });
 
         function updateUI(state) {
-            const statusCard = document.getElementById('statusCard');
             const statusBadge = document.getElementById('statusBadge');
             const userInfo = document.getElementById('userInfo');
             const actionForm = document.getElementById('actionForm');
             const releaseForm = document.getElementById('releaseForm');
 
             if (state.isBusy) {
-                statusCard.className = 'card shadow-sm card-status mb-4 border-danger';
-                statusBadge.className = 'badge bg-danger fs-5 p-3 mb-3 w-100';
-                statusBadge.innerText = 'ĐANG BẬN - Có người đang sử dụng';
+                statusBadge.className = 'p-3 rounded-3 text-white fw-bold fs-5 mb-3 shadow-sm bg-danger';
+                statusBadge.innerHTML = `<i class="fa-solid fa-lock me-2"></i> ĐANG BẬN - Đang có người sử dụng`;
                 
                 document.getElementById('currentUserName').innerText = state.name;
                 document.getElementById('currentUserRoom').innerText = state.room;
@@ -203,12 +250,10 @@
                 actionForm.style.display = 'none';
                 releaseForm.style.display = 'block';
 
-                // Kích hoạt đồng hồ đếm giờ ngay lập tức
                 startTimer(state.timestamp);
             } else {
-                statusCard.className = 'card shadow-sm card-status mb-4 border-success';
-                statusBadge.className = 'badge bg-success fs-5 p-3 mb-3 w-100';
-                statusBadge.innerText = 'ĐANG TRỐNG - Có thể đăng nhập';
+                statusBadge.className = 'p-3 rounded-3 text-white fw-bold fs-5 mb-3 shadow-sm bg-success';
+                statusBadge.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i> ĐANG TRỐNG - Có thể đăng nhập`;
                 
                 userInfo.style.display = 'none';
                 actionForm.style.display = 'block';
