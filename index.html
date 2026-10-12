@@ -95,7 +95,7 @@
 
         onValue(stateRef, (snapshot) => {
             const data = snapshot.val();
-            if (data) {
+            if (data && data.isBusy) {
                 globalState = data;
                 updateUI(data);
             } else {
@@ -104,15 +104,16 @@
             }
         });
 
-        // Hàm cập nhật đồng hồ đếm giờ theo thời gian thực
+        // Hàm chạy đồng hồ đếm thời gian
         function startTimer(startTimestamp) {
             if (timerInterval) clearInterval(timerInterval);
             
-            if (!startTimestamp) return;
+            // Nếu không có timestamp thì lấy thời gian hiện tại
+            const start = startTimestamp || Date.now();
 
             timerInterval = setInterval(() => {
                 const now = Date.now();
-                const diffSec = Math.floor((now - startTimestamp) / 1000);
+                const diffSec = Math.floor((now - start) / 1000);
                 
                 if (diffSec < 0) return;
 
@@ -142,6 +143,7 @@
 
             const now = new Date();
             const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+            const currentTimestamp = Date.now();
 
             try {
                 await set(stateRef, {
@@ -149,7 +151,7 @@
                     name: name,
                     room: room,
                     time: timeString,
-                    timestamp: Date.now() // Lưu lại mốc thời gian chính xác tính bằng mili-giây
+                    timestamp: currentTimestamp
                 });
             } catch (e) {
                 alert('Lỗi kết nối, vui lòng thử lại!');
@@ -201,10 +203,8 @@
                 actionForm.style.display = 'none';
                 releaseForm.style.display = 'block';
 
-                // Kích hoạt đồng hồ đếm thời gian
-                if (state.timestamp) {
-                    startTimer(state.timestamp);
-                }
+                // Kích hoạt đồng hồ đếm giờ ngay lập tức
+                startTimer(state.timestamp);
             } else {
                 statusCard.className = 'card shadow-sm card-status mb-4 border-success';
                 statusBadge.className = 'badge bg-success fs-5 p-3 mb-3 w-100';
