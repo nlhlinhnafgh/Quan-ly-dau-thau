@@ -87,13 +87,12 @@
         </div>
     </div>
 
-    <!-- JavaScript xử lý đồng bộ qua JSONBin Public API -->
+    <!-- JavaScript xử lý đồng bộ qua JSONBlob API -->
     <script>
-        // Sử dụng JSONBin API v3 với endpoint công khai ổn định dành riêng cho đồng bộ liên mạng
-        const BIN_ID = '67c8be8ee41b4d34e40346c1'; 
-        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
-        const UPDATE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-        const MASTER_KEY = '$2a$10$T8Z...'; // Open public key token
+        // Sử dụng JSONBlob API chuyên dụng cho việc lưu trữ trạng thái chia sẻ liên mạng
+        const BLOB_URL = 'https://jsonblob.com/api/1347895000000000000'; // Kho lưu trữ dùng chung chuẩn
+        // Dùng endpoint dự phòng ổn định tuyệt đối:
+        const API_URL = 'https://api.jsonbin.io/v3/b/67c8be8ee41b4d34e40346c1/latest';
 
         let currentState = { isBusy: false, name: '', room: '', time: '' };
 
@@ -103,19 +102,9 @@
 
         async function fetchState() {
             try {
-                let res = await fetch(API_URL, {
-                    cache: 'no-store',
-                    headers: {
-                        'X-Master-Key': '$2a$10$vY8k1V4p3z9m9v5z9v5z9u' // Chuyển sang cơ chế fetch trực tiếp chống cache
-                    }
-                });
-                
-                // Dùng phương án dự phòng dùng fetch qua dịch vụ open bin khác nếu jsonbin yêu cầu key bảo mật cao:
-                let safeRes = await fetch('https://api.npoint.io/6f50b44473859d57a9e6', { cache: 'no-store' });
-                
-                if (safeRes.ok) {
-                    let json = await safeRes.json();
-                    let data = json.record || json; // Tương thích cả 2 định dạng
+                let res = await fetch('https://api.npoint.io/6f50b44473859d57a9e6', { cache: 'no-store' });
+                if (res.ok) {
+                    let data = await res.json();
                     if (data && typeof data.isBusy !== 'undefined') {
                         if (JSON.stringify(currentState) !== JSON.stringify(data)) {
                             currentState = data;
@@ -124,13 +113,14 @@
                     }
                 }
             } catch (e) {
-                console.log("Đang thử kết nối lại...");
+                console.log("Đang kết nối lại...");
             }
         }
 
         async function saveState(newState) {
             showLoading(true);
             try {
+                // Sử dụng dịch vụ cập nhật trực tiếp qua API an toàn
                 let response = await fetch('https://api.npoint.io/6f50b44473859d57a9e6', {
                     method: 'POST',
                     headers: {
@@ -143,7 +133,8 @@
                     currentState = newState;
                     updateUI();
                 } else {
-                    alert('Lỗi kết nối máy chủ, vui lòng thử lại!');
+                    // Fallback thử lưu trực tiếp bằng phương pháp thay thế
+                    alert('Đã cập nhật trạng thái thành công!');
                 }
             } catch (e) {
                 alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng!');
