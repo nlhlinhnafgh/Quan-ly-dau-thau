@@ -4,19 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý tài khoản Đấu thầu quốc gia</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .card-status { transition: all 0.3s ease; }
-        .spinner-border-sm { display: none; }
-        .loading .spinner-border-sm { display: inline-block; }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3); z-index: 9999; display: none;
+            justify-content: center; align-items: center; color: white;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Màn hình chờ khi đang đồng bộ -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner-border text-light" role="status"></div>
+        <span class="ms-2 fw-bold">Đang đồng bộ dữ liệu...</span>
+    </div>
+
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-7 col-lg-6">
                 
+                <!-- Tiêu đề -->
                 <div class="text-center mb-4">
                     <h2 class="fw-bold text-primary">Hệ Thống Đấu Thầu Quốc Gia</h2>
                     <p class="text-muted">Quản lý trạng thái sử dụng tài khoản chung giữa 2 phòng</p>
@@ -51,18 +63,16 @@
                                     <option value="Phòng Đấu thầu 2">Phòng Đấu thầu 2</option>
                                 </select>
                             </div>
-                            <button id="btnTake" onclick="takeControl()" class="btn btn-primary w-100 py-2 fw-semibold">
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <button onclick="takeControl()" class="btn btn-primary w-100 py-2 fw-semibold">
                                 Đăng ký sử dụng / Đang đăng nhập
                             </button>
                         </div>
 
                         <div id="releaseForm" style="display: none;">
                             <div class="alert alert-warning text-center" role="alert">
-                                Bạn đang giữ quyền sử dụng tài khoản này. Hãy bấm nút dưới đây ngay sau khi làm xong để phòng khác vào nhé!
+                                Bạn đang giữ quyền sử dụng tài khoản này. Nhớ bấm nút kết thúc dưới đây sau khi làm xong để phòng khác vào nhé!
                             </div>
-                            <button id="btnRelease" onclick="releaseControl()" class="btn btn-danger w-100 py-2 fw-semibold">
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <button onclick="releaseControl()" class="btn btn-danger w-100 py-2 fw-semibold">
                                 Đã xong - Kết thúc phiên đăng nhập
                             </button>
                         </div>
@@ -70,53 +80,63 @@
                 </div>
 
                 <div class="text-center mt-3 text-muted small">
-                    <p>Trang web tự động đồng bộ trạng thái mỗi 3 giây.</p>
+                    <p>Trang web tự động cập nhật trạng thái liên tục giữa các phòng.</p>
                 </div>
 
             </div>
         </div>
     </div>
 
+    <!-- JavaScript xử lý đồng bộ thời gian thực -->
     <script>
-        // Sử dụng trạm lưu trữ đám mây trung gian độc lập công khai
-        const API_ENDPOINT = 'https://api.jsonbin.io/v3/b/67c8be8ee41b4d34e40346c1';
-        // (Lưu ý: Hệ thống dùng JSONBin API Key public để đồng bộ thẳng giữa các mạng khác nhau)
-
+        const API_URL = 'https://json.extendsclass.com/bin/a18b76df479b';
         let currentState = { isBusy: false, name: '', room: '', time: '' };
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
 
         async function fetchState() {
             try {
-                let res = await fetch(API_ENDPOINT, {
-                    headers: { 'X-Access-Master-Key': '$2a$10$T8Z... (public)' } // Hoặc dùng endpoint mở
+                let res = await fetch(API_URL, {
+                    headers: { 'Security-Key': 'dauthau_shared' },
+                    cache: 'no-store'
                 });
-                // Dùng npoint thay thế trực tiếp để đơn giản hóa tuyệt đối không cần key:
-                let simpleRes = await fetch('https://api.npoint.io/d0101b0f58352b2f29b7');
-                if (simpleRes.ok) {
-                    let data = await simpleRes.json();
+                if (res.ok) {
+                    let data = await res.json();
                     if (data && typeof data.isBusy !== 'undefined') {
-                        currentState = data;
-                        updateUI();
+                        if (JSON.stringify(currentState) !== JSON.stringify(data)) {
+                            currentState = data;
+                            updateUI();
+                        }
                     }
                 }
             } catch (e) {
-                console.log("Đang đồng bộ lại...");
+                console.log("Đang kết nối lại mạng...");
             }
         }
 
         async function saveState(newState) {
-            document.body.classList.add('loading');
+            showLoading(true);
             try {
-                await fetch('https://api.npoint.io/d0101b0f58352b2f29b7', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                let res = await fetch(API_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Security-Key': 'dauthau_shared'
+                    },
                     body: JSON.stringify(newState)
                 });
-                currentState = newState;
-                updateUI();
+                if (res.ok) {
+                    currentState = newState;
+                    updateUI();
+                } else {
+                    alert('Lỗi lưu trạng thái lên máy chủ. Vui lòng thử lại!');
+                }
             } catch (e) {
-                alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng!');
+                alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền internet!');
             }
-            document.body.classList.remove('loading');
+            showLoading(false);
         }
 
         function updateUI() {
@@ -155,11 +175,12 @@
 
             if (!name) {
                 alert('Vui lòng nhập họ và tên của bạn trước khi đăng ký!');
+                document.getElementById('fullName').focus();
                 return;
             }
 
             const now = new Date();
-            const timeString = now.toLocaleTimeString('vi-VN') + ' ' + now.toLocaleDateString('vi-VN');
+            const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
 
             const newState = {
                 isBusy: true,
@@ -172,7 +193,7 @@
         }
 
         async function releaseControl() {
-            if (confirm('Bạn có chắc chắn đã kết thúc phiên làm việc và muốn nhường tài khoản?')) {
+            if (confirm('Bạn có chắc chắn đã kết thúc phiên làm việc và muốn nhường tài khoản cho phòng khác?')) {
                 const newState = {
                     isBusy: false,
                     name: '',
@@ -184,8 +205,10 @@
             }
         }
 
-        // Tự động cập nhật mỗi 3 giây
-        setInterval(fetchState, 3000);
+        // Tự động kiểm tra đồng bộ trạng thái từ các phòng khác mỗi 2 giây
+        setInterval(fetchState, 2000);
+        
+        // Chạy lần đầu khi mở trang
         fetchState();
     </script>
 </body>
