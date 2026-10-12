@@ -32,7 +32,8 @@
                         <div id="userInfo" class="text-muted mb-2" style="display: none;">
                             <p class="mb-1">Người đang dùng: <strong id="currentUserName" class="text-dark"></strong></p>
                             <p class="mb-1">Thuộc phòng: <strong id="currentUserRoom" class="text-dark"></strong></p>
-                            <p class="mb-0">Thời gian bắt đầu: <strong id="currentTime" class="text-dark"></strong></p>
+                            <p class="mb-1">Thời điểm vào: <strong id="currentTime" class="text-dark"></strong></p>
+                            <p class="mb-0 text-danger fw-semibold">⏱️ Thời gian đã dùng: <span id="elapsedTime">0 phút 0 giây</span></p>
                         </div>
                     </div>
                 </div>
@@ -89,7 +90,8 @@
         const db = getDatabase(app);
         const stateRef = ref(db, 'dauthau/state');
 
-        let globalState = { isBusy: false, name: '', room: '', time: '' };
+        let globalState = { isBusy: false, name: '', room: '', time: '', timestamp: 0 };
+        let timerInterval = null;
 
         onValue(stateRef, (snapshot) => {
             const data = snapshot.val();
@@ -97,12 +99,37 @@
                 globalState = data;
                 updateUI(data);
             } else {
-                globalState = { isBusy: false, name: '', room: '', time: '' };
+                globalState = { isBusy: false, name: '', room: '', time: '', timestamp: 0 };
                 updateUI(globalState);
             }
         });
 
-        // Gán sự kiện trực tiếp bằng Javascript thuần để tránh bị kẹt cache trên GitHub
+        // Hàm cập nhật đồng hồ đếm giờ theo thời gian thực
+        function startTimer(startTimestamp) {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            if (!startTimestamp) return;
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const diffSec = Math.floor((now - startTimestamp) / 1000);
+                
+                if (diffSec < 0) return;
+
+                const hours = Math.floor(diffSec / 3600);
+                const minutes = Math.floor((diffSec % 3600) / 60);
+                const seconds = diffSec % 60;
+
+                let timeString = '';
+                if (hours > 0) timeString += `${hours} giờ `;
+                if (minutes > 0 || hours > 0) timeString += `${minutes} phút `;
+                timeString += `${seconds} giây`;
+
+                const el = document.getElementById('elapsedTime');
+                if (el) el.innerText = timeString;
+            }, 1000);
+        }
+
         document.getElementById('btnTake').addEventListener('click', async function() {
             const name = document.getElementById('fullName').value.trim();
             const room = document.getElementById('roomName').value;
@@ -114,14 +141,15 @@
             }
 
             const now = new Date();
-            const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+            const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
 
             try {
                 await set(stateRef, {
                     isBusy: true,
                     name: name,
                     room: room,
-                    time: timeString
+                    time: timeString,
+                    timestamp: Date.now() // Lưu lại mốc thời gian chính xác tính bằng mili-giây
                 });
             } catch (e) {
                 alert('Lỗi kết nối, vui lòng thử lại!');
@@ -129,11 +157,10 @@
         });
 
         document.getElementById('btnRelease').addEventListener('click', async function() {
-            // Hiện ngay lập tức hộp thoại nhập tên bảo vệ phiên
             let currentOwner = globalState.name || "Người dùng";
-            let inputName = prompt(`XÁC THỰC KẾT THÚC PHIÊN:\nVui lòng nhập chính xác Họ và tên của người đang dùng ("${currentOwner}") để mở khóa:`);
+            let inputName = prompt(`XÁC THỰC KẾT THÚC PHIÊN:\nVui lòng nhập chính xác Họ và tên người đang dùng ("${currentOwner}") để mở khóa:`);
             
-            if (inputName === null) return; // Người dùng bấm Hủy
+            if (inputName === null) return;
 
             if (inputName.trim().toLowerCase() !== currentOwner.toLowerCase()) {
                 alert('Tên xác nhận không chính xác! Bạn không có quyền kết thúc phiên của người khác.');
@@ -145,7 +172,8 @@
                     isBusy: false,
                     name: '',
                     room: '',
-                    time: ''
+                    time: '',
+                    timestamp: 0
                 });
                 document.getElementById('fullName').value = '';
             } catch (e) {
@@ -172,6 +200,11 @@
                 userInfo.style.display = 'block';
                 actionForm.style.display = 'none';
                 releaseForm.style.display = 'block';
+
+                // Kích hoạt đồng hồ đếm thời gian
+                if (state.timestamp) {
+                    startTimer(state.timestamp);
+                }
             } else {
                 statusCard.className = 'card shadow-sm card-status mb-4 border-success';
                 statusBadge.className = 'badge bg-success fs-5 p-3 mb-3 w-100';
@@ -180,6 +213,8 @@
                 userInfo.style.display = 'none';
                 actionForm.style.display = 'block';
                 releaseForm.style.display = 'none';
+
+                if (timerInterval) clearInterval(timerInterval);
             }
         }
     </script>
