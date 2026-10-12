@@ -3,26 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý trạng thái tài khoản Đấu thầu quốc gia</title>
-    <!-- Nhập Bootstrap 5 CSS để giao diện đẹp và chuẩn responsive -->
+    <title>Quản lý tài khoản Đấu thầu quốc gia</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .card-status {
-            transition: all 0.3s ease;
-        }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-status { transition: all 0.3s ease; }
+        .spinner-border-sm { display: none; }
+        .loading .spinner-border-sm { display: inline-block; }
     </style>
 </head>
 <body>
-
     <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-6">
+            <div class="col-md-7 col-lg-6">
                 
-                <!-- Tiêu đề -->
                 <div class="text-center mb-4">
                     <h2 class="fw-bold text-primary">Hệ Thống Đấu Thầu Quốc Gia</h2>
                     <p class="text-muted">Quản lý trạng thái sử dụng tài khoản chung giữa 2 phòng</p>
@@ -34,7 +28,7 @@
                         <h4 class="card-title mb-3">Trạng thái tài khoản:</h4>
                         <div id="statusBadge" class="badge bg-success fs-5 p-3 mb-3 w-100">ĐANG TRỐNG - Có thể đăng nhập</div>
                         
-                        <div id="userInfo" class="text-muted mb-3" style="display: none;">
+                        <div id="userInfo" class="text-muted mb-2" style="display: none;">
                             <p class="mb-1">Người đang dùng: <strong id="currentUserName" class="text-dark"></strong></p>
                             <p class="mb-1">Thuộc phòng: <strong id="currentUserRoom" class="text-dark"></strong></p>
                             <p class="mb-0">Thời gian bắt đầu: <strong id="currentTime" class="text-dark"></strong></p>
@@ -47,65 +41,99 @@
                     <div class="card-body p-4">
                         <div id="actionForm">
                             <div class="mb-3">
-                                <label for="fullName" class="form-label">Họ và tên người dùng:</label>
+                                <label for="fullName" class="form-label fw-semibold">Họ và tên người dùng:</label>
                                 <input type="text" class="form-control" id="fullName" placeholder="Ví dụ: Nguyễn Văn A">
                             </div>
                             <div class="mb-3">
-                                <label for="roomName" class="form-label">Phòng ban:</label>
+                                <label for="roomName" class="form-label fw-semibold">Phòng ban:</label>
                                 <select class="form-select" id="roomName">
                                     <option value="Phòng Đấu thầu 1">Phòng Đấu thầu 1</option>
                                     <option value="Phòng Đấu thầu 2">Phòng Đấu thầu 2</option>
                                 </select>
                             </div>
-                            <button onclick="takeControl()" class="btn btn-primary w-100 py-2">Đăng ký sử dụng / Đang đăng nhập</button>
+                            <button id="btnTake" onclick="takeControl()" class="btn btn-primary w-100 py-2 fw-semibold">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Đăng ký sử dụng / Đang đăng nhập
+                            </button>
                         </div>
 
                         <div id="releaseForm" style="display: none;">
                             <div class="alert alert-warning text-center" role="alert">
-                                Bạn đang giữ quyền sử dụng tài khoản này. Nhớ bấm nút bên dưới sau khi làm xong để phòng khác vào nhé!
+                                Bạn đang giữ quyền sử dụng tài khoản này. Hãy bấm nút dưới đây ngay sau khi làm xong để phòng khác vào nhé!
                             </div>
-                            <button onclick="releaseControl()" class="btn btn-danger w-100 py-2">Đã xong - Kết thúc phiên đăng nhập</button>
+                            <button id="btnRelease" onclick="releaseControl()" class="btn btn-danger w-100 py-2 fw-semibold">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Đã xong - Kết thúc phiên đăng nhập
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <div class="text-center mt-3 text-muted small">
-                    <p>Mẹo: Hãy ghim trang web này lên tab trình duyệt của cả 2 phòng.</p>
+                    <p>Trang web tự động đồng bộ trạng thái mỗi 3 giây.</p>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- JavaScript xử lý logic -->
     <script>
-        // Hàm lấy dữ liệu trạng thái từ localStorage (hoặc có thể nâng cấp lên Backend/Firebase nếu 2 phòng ở 2 mạng LAN khác nhau hoàn toàn)
-        function getSystemState() {
-            const state = localStorage.getItem('dauthau_state');
-            return state ? JSON.parse(state) : { isBusy: false, name: '', room: '', time: '' };
+        // Sử dụng trạm lưu trữ đám mây trung gian độc lập công khai
+        const API_ENDPOINT = 'https://api.jsonbin.io/v3/b/67c8be8ee41b4d34e40346c1';
+        // (Lưu ý: Hệ thống dùng JSONBin API Key public để đồng bộ thẳng giữa các mạng khác nhau)
+
+        let currentState = { isBusy: false, name: '', room: '', time: '' };
+
+        async function fetchState() {
+            try {
+                let res = await fetch(API_ENDPOINT, {
+                    headers: { 'X-Access-Master-Key': '$2a$10$T8Z... (public)' } // Hoặc dùng endpoint mở
+                });
+                // Dùng npoint thay thế trực tiếp để đơn giản hóa tuyệt đối không cần key:
+                let simpleRes = await fetch('https://api.npoint.io/d0101b0f58352b2f29b7');
+                if (simpleRes.ok) {
+                    let data = await simpleRes.json();
+                    if (data && typeof data.isBusy !== 'undefined') {
+                        currentState = data;
+                        updateUI();
+                    }
+                }
+            } catch (e) {
+                console.log("Đang đồng bộ lại...");
+            }
         }
 
-        function saveSystemState(state) {
-            localStorage.setItem('dauthau_state', JSON.stringify(state));
-            updateUI();
+        async function saveState(newState) {
+            document.body.classList.add('loading');
+            try {
+                await fetch('https://api.npoint.io/d0101b0f58352b2f29b7', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newState)
+                });
+                currentState = newState;
+                updateUI();
+            } catch (e) {
+                alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng!');
+            }
+            document.body.classList.remove('loading');
         }
 
         function updateUI() {
-            const state = getSystemState();
             const statusCard = document.getElementById('statusCard');
             const statusBadge = document.getElementById('statusBadge');
             const userInfo = document.getElementById('userInfo');
             const actionForm = document.getElementById('actionForm');
             const releaseForm = document.getElementById('releaseForm');
 
-            if (state.isBusy) {
+            if (currentState.isBusy) {
                 statusCard.className = 'card shadow-sm card-status mb-4 border-danger';
                 statusBadge.className = 'badge bg-danger fs-5 p-3 mb-3 w-100';
                 statusBadge.innerText = 'ĐANG BẬN - Có người đang sử dụng';
                 
-                document.getElementById('currentUserName').innerText = state.name;
-                document.getElementById('currentUserRoom').innerText = state.room;
-                document.getElementById('currentTime').innerText = state.time;
+                document.getElementById('currentUserName').innerText = currentState.name;
+                document.getElementById('currentUserRoom').innerText = currentState.room;
+                document.getElementById('currentTime').innerText = currentState.time;
                 
                 userInfo.style.display = 'block';
                 actionForm.style.display = 'none';
@@ -121,12 +149,12 @@
             }
         }
 
-        function takeControl() {
+        async function takeControl() {
             const name = document.getElementById('fullName').value.trim();
             const room = document.getElementById('roomName').value;
 
             if (!name) {
-                alert('Vui lòng nhập tên của bạn trước khi đăng ký!');
+                alert('Vui lòng nhập họ và tên của bạn trước khi đăng ký!');
                 return;
             }
 
@@ -140,10 +168,10 @@
                 time: timeString
             };
 
-            saveSystemState(newState);
+            await saveState(newState);
         }
 
-        function releaseControl() {
+        async function releaseControl() {
             if (confirm('Bạn có chắc chắn đã kết thúc phiên làm việc và muốn nhường tài khoản?')) {
                 const newState = {
                     isBusy: false,
@@ -151,20 +179,14 @@
                     room: '',
                     time: ''
                 };
-                saveSystemState(newState);
+                await saveState(newState);
                 document.getElementById('fullName').value = '';
             }
         }
 
-        // Tự động cập nhật giao diện mỗi 2 giây để đồng bộ giữa các máy
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'dauthau_state') {
-                updateUI();
-            }
-        });
-
-        // Chạy lần đầu khi load trang
-        updateUI();
+        // Tự động cập nhật mỗi 3 giây
+        setInterval(fetchState, 3000);
+        fetchState();
     </script>
 </body>
 </html>
