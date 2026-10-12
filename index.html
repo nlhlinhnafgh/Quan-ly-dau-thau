@@ -59,7 +59,7 @@
 
                         <div id="releaseForm" style="display: none;">
                             <div class="alert alert-warning text-center" role="alert">
-                                Bạn đang giữ quyền sử dụng tài khoản này. Nhớ bấm nút kết thúc dưới đây sau khi làm xong để phòng khác vào nhé!
+                                Tài khoản đang được sử dụng. Chỉ người đang dùng (hoặc nhập đúng tên) mới có thể kết thúc phiên!
                             </div>
                             <button onclick="releaseControl()" class="btn btn-danger w-100 py-2 fw-semibold">
                                 Đã xong - Kết thúc phiên đăng nhập
@@ -81,7 +81,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Cấu hình kết nối Firebase với URL của bạn
+        // Cấu hình kết nối Firebase của bạn
         const firebaseConfig = {
             databaseURL: "https://quan-ly-dau-thau-fa988-default-rtdb.asia-southeast1.firebasedatabase.app/" 
         };
@@ -90,13 +90,17 @@
         const db = getDatabase(app);
         const stateRef = ref(db, 'dauthau/state');
 
+        let globalState = { isBusy: false, name: '', room: '', time: '' };
+
         // Lắng nghe thay đổi dữ liệu thời gian thực cho tất cả mọi người đang mở web
         onValue(stateRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
+                globalState = data;
                 updateUI(data);
             } else {
-                updateUI({ isBusy: false, name: '', room: '', time: '' });
+                globalState = { isBusy: false, name: '', room: '', time: '' };
+                updateUI(globalState);
             }
         });
 
@@ -126,18 +130,26 @@
         }
 
         window.releaseControl = async function() {
-            if (confirm('Bạn có chắc chắn đã kết thúc phiên làm việc và muốn nhường tài khoản?')) {
-                try {
-                    await set(stateRef, {
-                        isBusy: false,
-                        name: '',
-                        room: '',
-                        time: ''
-                    });
-                    document.getElementById('fullName').value = '';
-                } catch (e) {
-                    alert('Lỗi kết nối, vui lòng thử lại!');
-                }
+            // Yêu cầu nhập đúng tên người đang giữ phiên thì mới cho kết thúc
+            const inputName = prompt(`Bảo vệ phiên làm việc:\nVui lòng nhập chính xác Họ và tên của người đang dùng ("${globalState.name}") để xác nhận kết thúc phiên:`);
+            
+            if (inputName === null) return; // Người dùng bấm Hủy
+
+            if (inputName.trim().toLowerCase() !== globalState.name.toLowerCase()) {
+                alert('Tên xác nhận không chính xác! Bạn không có quyền kết thúc phiên của người khác.');
+                return;
+            }
+
+            try {
+                await set(stateRef, {
+                    isBusy: false,
+                    name: '',
+                    room: '',
+                    time: ''
+                });
+                document.getElementById('fullName').value = '';
+            } catch (e) {
+                alert('Lỗi kết nối, vui lòng thử lại!');
             }
         }
 
