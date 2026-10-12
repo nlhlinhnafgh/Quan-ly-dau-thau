@@ -59,7 +59,7 @@
 
                         <div id="releaseForm" style="display: none;">
                             <div class="alert alert-warning text-center" role="alert">
-                                Tài khoản đang được sử dụng. Chỉ người đang dùng (hoặc nhập đúng tên) mới có thể kết thúc phiên!
+                                Tài khoản đang được sử dụng. Phải nhập đúng tên người đang dùng mới có thể kết thúc phiên!
                             </div>
                             <button onclick="releaseControl()" class="btn btn-danger w-100 py-2 fw-semibold">
                                 Đã xong - Kết thúc phiên đăng nhập
@@ -130,8 +130,8 @@
         }
 
         window.releaseControl = async function() {
-            // Yêu cầu nhập đúng tên người đang giữ phiên thì mới cho kết thúc
-            const inputName = prompt(`Bảo vệ phiên làm việc:\nVui lòng nhập chính xác Họ và tên của người đang dùng ("${globalState.name}") để xác nhận kết thúc phiên:`);
+            // Hiển thị ngay bảng yêu cầu nhập tên xác thực, không dùng confirm thông thường
+            const inputName = prompt(`BẢO VỆ PHIÊN LÀM VIỆC:\nVui lòng nhập chính xác Họ và tên người đang dùng ("${globalState.name}") để kết thúc phiên:`);
             
             if (inputName === null) return; // Người dùng bấm Hủy
 
