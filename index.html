@@ -9,20 +9,9 @@
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .card-status { transition: all 0.3s ease; }
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.3); z-index: 9999; display: none;
-            justify-content: center; align-items: center; color: white;
-        }
     </style>
 </head>
 <body>
-
-    <!-- Màn hình chờ khi đang đồng bộ -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner-border text-light" role="status"></div>
-        <span class="ms-2 fw-bold">Đang đồng bộ dữ liệu giữa 2 phòng...</span>
-    </div>
 
     <div class="container py-5">
         <div class="row justify-content-center">
@@ -31,7 +20,7 @@
                 <!-- Tiêu đề -->
                 <div class="text-center mb-4">
                     <h2 class="fw-bold text-primary">Hệ Thống Đấu Thầu Quốc Gia</h2>
-                    <p class="text-muted">Quản lý trạng thái sử dụng tài khoản chung giữa 2 phòng</p>
+                    <p class="text-muted">Phòng Đấu thầu 1 & Phòng Đấu thầu 2</p>
                 </div>
 
                 <!-- Thẻ hiển thị trạng thái -->
@@ -80,114 +69,93 @@
                 </div>
 
                 <div class="text-center mt-3 text-muted small">
-                    <p>Trang web tự động đồng bộ theo thời gian thực mỗi 2 giây.</p>
+                    <p>Hệ thống tự động đồng bộ tức thì cho tất cả mọi người.</p>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- JavaScript xử lý đồng bộ qua REST API chuẩn cho phép CORS -->
-    <script>
-        // Sử dụng trạm API công khai hỗ trợ đầy đủ CORS cho ứng dụng web tĩnh
-        const API_URL = 'https://api.restful-api.dev/objects';
-        const OBJECT_ID = 'ff8081819328434d019335606d510000'; // Dùng chung một ID định danh cố định cho cơ quan
+    <!-- Firebase SDK (Realtime Database trực tuyến) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        let currentState = { isBusy: false, name: '', room: '', time: '' };
+        // Cấu hình kết nối Firebase với URL của bạn
+        const firebaseConfig = {
+            databaseURL: "https://quan-ly-dau-thau-fa988-default-rtdb.asia-southeast1.firebasedatabase.app/" 
+        };
 
-        function showLoading(show) {
-            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
-        }
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const stateRef = ref(db, 'dauthau/state');
 
-        async function fetchState() {
-            try {
-                let res = await fetch(`${API_URL}`, { cache: 'no-store' });
-                if (res.ok) {
-                    let list = await res.json();
-                    // Lọc tìm trạng thái của ứng dụng
-                    let target = list.find(item => item.id === OBJECT_ID || (item.name && item.name.includes('dauthau_state')));
-                    if (target && target.data) {
-                        let data = target.data;
-                        if (data && typeof data.isBusy !== 'undefined') {
-                            if (JSON.stringify(currentState) !== JSON.stringify(data)) {
-                                currentState = data;
-                                updateUI();
-                            }
-                        }
-                    } else {
-                        // Nếu chưa có object trên cloud, thử fetch trực tiếp object đơn lẻ dự phòng
-                        let singleRes = await fetch(`https://api.jsonbin.io/v3/b/67c8be8ee41b4d34e40346c1/latest`, { cache: 'no-store' });
-                        if (singleRes.ok) {
-                            let json = await singleRes.json();
-                            let data = json.record || json;
-                            if (data && typeof data.isBusy !== 'undefined') {
-                                if (JSON.stringify(currentState) !== JSON.stringify(data)) {
-                                    currentState = data;
-                                    updateUI();
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e) {
-                console.log("Đang kết nối lại...");
+        // Lắng nghe thay đổi dữ liệu thời gian thực cho tất cả mọi người đang mở web
+        onValue(stateRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                updateUI(data);
+            } else {
+                updateUI({ isBusy: false, name: '', room: '', time: '' });
             }
-        }
+        });
 
-        async function saveState(newState) {
-            showLoading(true);
+        window.takeControl = async function() {
+            const name = document.getElementById('fullName').value.trim();
+            const room = document.getElementById('roomName').value;
+
+            if (!name) {
+                alert('Vui lòng nhập họ và tên của bạn trước khi đăng ký!');
+                document.getElementById('fullName').focus();
+                return;
+            }
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+
             try {
-                // Cập nhật trạng thái thông qua phương thức PUT/POST chuẩn mở
-                let response = await fetch(`${API_URL}/${OBJECT_ID}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: "dauthau_state_shared",
-                        data: newState
-                    })
+                await set(stateRef, {
+                    isBusy: true,
+                    name: name,
+                    room: room,
+                    time: timeString
                 });
-                
-                if (response.ok) {
-                    currentState = newState;
-                    updateUI();
-                } else {
-                    // Fallback thử POST tạo mới nếu object chưa tồn tại
-                    let postRes = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name: "dauthau_state_shared",
-                            data: newState
-                        })
-                    });
-                    if(postRes.ok) {
-                        currentState = newState;
-                        updateUI();
-                    } else {
-                        alert('Đã cập nhật trạng thái thành công!');
-                    }
-                }
             } catch (e) {
-                alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng!');
+                alert('Lỗi kết nối, vui lòng thử lại!');
             }
-            showLoading(false);
         }
 
-        function updateUI() {
+        window.releaseControl = async function() {
+            if (confirm('Bạn có chắc chắn đã kết thúc phiên làm việc và muốn nhường tài khoản?')) {
+                try {
+                    await set(stateRef, {
+                        isBusy: false,
+                        name: '',
+                        room: '',
+                        time: ''
+                    });
+                    document.getElementById('fullName').value = '';
+                } catch (e) {
+                    alert('Lỗi kết nối, vui lòng thử lại!');
+                }
+            }
+        }
+
+        function updateUI(state) {
             const statusCard = document.getElementById('statusCard');
             const statusBadge = document.getElementById('statusBadge');
             const userInfo = document.getElementById('userInfo');
             const actionForm = document.getElementById('actionForm');
             const releaseForm = document.getElementById('releaseForm');
 
-            if (currentState.isBusy) {
+            if (state.isBusy) {
                 statusCard.className = 'card shadow-sm card-status mb-4 border-danger';
                 statusBadge.className = 'badge bg-danger fs-5 p-3 mb-3 w-100';
                 statusBadge.innerText = 'ĐANG BẬN - Có người đang sử dụng';
                 
-                document.getElementById('currentUserName').innerText = currentState.name;
-                document.getElementById('currentUserRoom').innerText = currentState.room;
-                document.getElementById('currentTime').innerText = currentState.time;
+                document.getElementById('currentUserName').innerText = state.name;
+                document.getElementById('currentUserRoom').innerText = state.room;
+                document.getElementById('currentTime').innerText = state.time;
                 
                 userInfo.style.display = 'block';
                 actionForm.style.display = 'none';
@@ -202,48 +170,6 @@
                 releaseForm.style.display = 'none';
             }
         }
-
-        async function takeControl() {
-            const name = document.getElementById('fullName').value.trim();
-            const room = document.getElementById('roomName').value;
-
-            if (!name) {
-                alert('Vui nhập họ và tên của bạn trước khi đăng ký!');
-                document.getElementById('fullName').focus();
-                return;
-            }
-
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
-
-            const newState = {
-                isBusy: true,
-                name: name,
-                room: room,
-                time: timeString
-            };
-
-            await saveState(newState);
-        }
-
-        async function releaseControl() {
-            if (confirm('Bạn có chắc chắn đã kết thúc phiên làm việc và muốn nhường tài khoản cho phòng khác?')) {
-                const newState = {
-                    isBusy: false,
-                    name: '',
-                    room: '',
-                    time: ''
-                };
-                await saveState(newState);
-                document.getElementById('fullName').value = '';
-            }
-        }
-
-        // Tự động kiểm tra đồng bộ trạng thái từ các phòng khác mỗi 2 giây
-        setInterval(fetchState, 2000);
-        
-        // Chạy lần đầu khi mở trang
-        fetchState();
     </script>
 </body>
 </html>
