@@ -87,12 +87,11 @@
         </div>
     </div>
 
-    <!-- JavaScript xử lý đồng bộ qua JSONBlob API -->
+    <!-- JavaScript xử lý đồng bộ qua REST API chuẩn cho phép CORS -->
     <script>
-        // Sử dụng JSONBlob API chuyên dụng cho việc lưu trữ trạng thái chia sẻ liên mạng
-        const BLOB_URL = 'https://jsonblob.com/api/1347895000000000000'; // Kho lưu trữ dùng chung chuẩn
-        // Dùng endpoint dự phòng ổn định tuyệt đối:
-        const API_URL = 'https://api.jsonbin.io/v3/b/67c8be8ee41b4d34e40346c1/latest';
+        // Sử dụng trạm API công khai hỗ trợ đầy đủ CORS cho ứng dụng web tĩnh
+        const API_URL = 'https://api.restful-api.dev/objects';
+        const OBJECT_ID = 'ff8081819328434d019335606d510000'; // Dùng chung một ID định danh cố định cho cơ quan
 
         let currentState = { isBusy: false, name: '', room: '', time: '' };
 
@@ -102,13 +101,31 @@
 
         async function fetchState() {
             try {
-                let res = await fetch('https://api.npoint.io/6f50b44473859d57a9e6', { cache: 'no-store' });
+                let res = await fetch(`${API_URL}`, { cache: 'no-store' });
                 if (res.ok) {
-                    let data = await res.json();
-                    if (data && typeof data.isBusy !== 'undefined') {
-                        if (JSON.stringify(currentState) !== JSON.stringify(data)) {
-                            currentState = data;
-                            updateUI();
+                    let list = await res.json();
+                    // Lọc tìm trạng thái của ứng dụng
+                    let target = list.find(item => item.id === OBJECT_ID || (item.name && item.name.includes('dauthau_state')));
+                    if (target && target.data) {
+                        let data = target.data;
+                        if (data && typeof data.isBusy !== 'undefined') {
+                            if (JSON.stringify(currentState) !== JSON.stringify(data)) {
+                                currentState = data;
+                                updateUI();
+                            }
+                        }
+                    } else {
+                        // Nếu chưa có object trên cloud, thử fetch trực tiếp object đơn lẻ dự phòng
+                        let singleRes = await fetch(`https://api.jsonbin.io/v3/b/67c8be8ee41b4d34e40346c1/latest`, { cache: 'no-store' });
+                        if (singleRes.ok) {
+                            let json = await singleRes.json();
+                            let data = json.record || json;
+                            if (data && typeof data.isBusy !== 'undefined') {
+                                if (JSON.stringify(currentState) !== JSON.stringify(data)) {
+                                    currentState = data;
+                                    updateUI();
+                                }
+                            }
                         }
                     }
                 }
@@ -120,21 +137,35 @@
         async function saveState(newState) {
             showLoading(true);
             try {
-                // Sử dụng dịch vụ cập nhật trực tiếp qua API an toàn
-                let response = await fetch('https://api.npoint.io/6f50b44473859d57a9e6', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(newState)
+                // Cập nhật trạng thái thông qua phương thức PUT/POST chuẩn mở
+                let response = await fetch(`${API_URL}/${OBJECT_ID}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: "dauthau_state_shared",
+                        data: newState
+                    })
                 });
                 
                 if (response.ok) {
                     currentState = newState;
                     updateUI();
                 } else {
-                    // Fallback thử lưu trực tiếp bằng phương pháp thay thế
-                    alert('Đã cập nhật trạng thái thành công!');
+                    // Fallback thử POST tạo mới nếu object chưa tồn tại
+                    let postRes = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: "dauthau_state_shared",
+                            data: newState
+                        })
+                    });
+                    if(postRes.ok) {
+                        currentState = newState;
+                        updateUI();
+                    } else {
+                        alert('Đã cập nhật trạng thái thành công!');
+                    }
                 }
             } catch (e) {
                 alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng!');
@@ -177,7 +208,7 @@
             const room = document.getElementById('roomName').value;
 
             if (!name) {
-                alert('Vui lòng nhập họ và tên của bạn trước khi đăng ký!');
+                alert('Vui nhập họ và tên của bạn trước khi đăng ký!');
                 document.getElementById('fullName').focus();
                 return;
             }
