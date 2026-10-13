@@ -186,3 +186,166 @@
                 <div class="text-center mt-3 text-muted small">
                     <p><i class="bi bi-lightning-charge-fill text-warning"></i> Hệ thống tự động đồng bộ tức thì cho tất cả phòng ban.</p>
                 </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            databaseURL: "https://quan-ly-dau-thau-fa988-default-rtdb.asia-southeast1.firebasedatabase.app/" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const stateRef = ref(db, 'dauthau/state');
+
+        let globalState = { isBusy: false, name: '', room: '', time: '', timestamp: 0, expectedEndTime: 0 };
+        let timerInterval = null;
+
+        onValue(stateRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.isBusy) {
+                globalState = data;
+                updateUI(data);
+            } else {
+                globalState = { isBusy: false, name: '', room: '', time: '', timestamp: 0, expectedEndTime: 0 };
+                updateUI(globalState);
+            }
+        });
+
+        function startTimer(startTimestamp, expectedEndTime) {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const start = startTimestamp || Date.now();
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const diffSec = Math.floor((now - start) / 1000);
+                
+                if (diffSec >= 0) {
+                    const hours = Math.floor(diffSec / 3600);
+                    const minutes = Math.floor((diffSec % 3600) / 60);
+                    const seconds = diffSec % 60;
+
+                    let timeString = '';
+                    if (hours > 0) timeString += `${hours} giờ `;
+                    if (minutes > 0 || hours > 0) timeString += `${minutes} phút `;
+                    timeString += `${seconds} giây`;
+
+                    const el = document.getElementById('elapsedTime');
+                    if (el) el.innerText = timeString;
+                }
+
+                const warningEl = document.getElementById('overdueWarning');
+                if (warningEl && expectedEndTime) {
+                    if (now > expectedEndTime) {
+                        warningEl.innerHTML = "<i class='bi bi-exclamation-circle-fill me-1'></i>(Đã quá hạn dự kiến!)";
+                    } else {
+                        warningEl.innerHTML = "";
+                    }
+                }
+            }, 1000);
+        }
+
+        document.getElementById('btnTake').addEventListener('click', async function() {
+            const name = document.getElementById('fullName').value.trim();
+            const room = document.getElementById('roomName').value;
+            const duration = parseInt(document.getElementById('durationMinutes').value) || 30;
+
+            if (!name) {
+                alert('Vui lòng nhập họ và tên của bạn trước khi đăng ký!');
+                document.getElementById('fullName').focus();
+                return;
+            }
+
+            const currentTimestamp = Date.now();
+            const expectedEndTime = currentTimestamp + (duration * 60 * 1000);
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
+
+            try {
+                await set(stateRef, {
+                    isBusy: true,
+                    name: name,
+                    room: room,
+                    time: timeString,
+                    timestamp: currentTimestamp,
+                    expectedEndTime: expectedEndTime
+                });
+            } catch (e) {
+                alert('Lỗi kết nối, vui lòng thử lại!');
+            }
+        });
+
+        document.getElementById('btnRelease').addEventListener('click', async function() {
+            let currentOwner = globalState.name || "Người dùng";
+            let inputName = prompt(`XÁC THỰC KẾT THÚC PHIÊN:\nVui lòng nhập chính xác Họ và tên người đang dùng ("${currentOwner}") để mở khóa:`);
+            
+            if (inputName === null) return;
+
+            if (inputName.trim().toLowerCase() !== currentOwner.toLowerCase()) {
+                alert('Tên xác nhận không chính xác! Bạn không có quyền kết thúc phiên của người khác.');
+                return;
+            }
+
+            try {
+                await set(stateRef, {
+                    isBusy: false,
+                    name: '',
+                    room: '',
+                    time: '',
+                    timestamp: 0,
+                    expectedEndTime: 0
+                });
+                document.getElementById('fullName').value = '';
+            } catch (e) {
+                alert('Lỗi kết nối, vui lòng thử lại!');
+            }
+        });
+
+        function updateUI(state) {
+            const statusBadge = document.getElementById('statusBadge');
+            const userInfo = document.getElementById('userInfo');
+            const actionForm = document.getElementById('actionForm');
+            const releaseForm = document.getElementById('releaseForm');
+
+            if (state.isBusy) {
+                statusBadge.className = 'status-badge status-busy mb-4 w-100 text-center';
+                statusBadge.innerHTML = '<i class="bi bi-lock-fill me-2"></i>ĐANG BẬN - Tài khoản đang được sử dụng';
+                
+                document.getElementById('currentUserName').innerText = state.name;
+                document.getElementById('currentUserRoom').innerText = state.room;
+                document.getElementById('currentTime').innerText = state.time;
+                
+                if (state.expectedEndTime) {
+                    const expectedDate = new Date(state.expectedEndTime);
+                    document.getElementById('expectedEndTime').innerText = expectedDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                } else {
+                    document.getElementById('expectedEndTime').innerText = 'Không xác định';
+                }
+                
+                userInfo.style.display = 'block';
+                actionForm.style.display = 'none';
+                releaseForm.style.display = 'block';
+
+                startTimer(state.timestamp, state.expectedEndTime);
+            } else {
+                statusBadge.className = 'status-badge status-free mb-4 w-100 text-center';
+                statusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>ĐANG TRỐNG - Có thể đăng nhập';
+                
+                userInfo.style.display = 'none';
+                actionForm.style.display = 'block';
+                releaseForm.style.display = 'none';
+
+                if (timerInterval) clearInterval(timerInterval);
+            }
+        }
+    </script>
+</body>
+</html>
