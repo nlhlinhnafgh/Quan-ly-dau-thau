@@ -118,7 +118,7 @@
                     <!-- Tiêu đề Header -->
                     <div id="headerSection" class="header-section">
                         <h3 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill me-2"></i>Hệ Thống Đấu Thầu Quốc Gia</h3>
-                        <p class="mb-0 text-white-50 small">Đồng bộ phiên làm việc Phòng Đấu thầu 1 & Phòng Đấu thầu 2[cite: 7]</p>
+                        <p class="mb-0 text-white-50 small">Đồng bộ phiên làm việc Phòng Đấu thầu 1 & Phòng Đấu thầu 2</p>
                     </div>
 
                     <div class="card-body p-4 p-md-5">
@@ -149,13 +149,13 @@
                                     </div>
                                 </div>
 
-                                <!-- Phần 1: Thời gian đã dùng (Nằm trên)[cite: 7] -->
+                                <!-- Phần 1: Thời gian đã dùng (Nằm trên) -->
                                 <div class="pt-2 border-top border-danger border-opacity-25 text-center bg-white rounded p-2 mb-3">
                                     <span class="text-muted small">⏱️ Thời gian đã dùng:</span> 
                                     <span id="elapsedTime" class="fw-bold text-danger">0 phút 0 giây</span>
                                 </div>
 
-                                <!-- Phần 2: Dự kiến kết thúc (Đã đưa xuống dưới, chữ to, rõ nét hơn)[cite: 7] -->
+                                <!-- Phần 2: Dự kiến kết thúc (Nằm dưới, chữ to, rõ nét) -->
                                 <div class="text-center p-3 bg-white rounded border border-danger border-opacity-25">
                                     <div class="text-danger fw-bold small text-uppercase mb-1">
                                         <i class="bi bi-hourglass-split me-1"></i> Dự kiến kết thúc
@@ -183,12 +183,12 @@
                             <div class="mb-4">
                                 <label for="durationMinutes" class="form-label"><i class="bi bi-clock-history me-1"></i> Thời gian dự kiến (phút):</label>
                                 <input type="number" class="form-control" id="durationMinutes" value="30" min="5" max="300">
-                                <div class="form-text text-muted small mt-1">Giúp đồng nghiệp biết khoảng thời gian bạn cần dùng.[cite: 7]</div>
+                                <div class="form-text text-muted small mt-1">Giúp đồng nghiệp biết khoảng thời gian bạn cần dùng.</div>
                             </div>
 
                             <!-- Lời nhắc nhở -->
                             <div class="alert alert-info py-2 px-3 small rounded-3 mb-3" role="alert">
-                                <i class="bi bi-info-circle-fill me-1"></i> <strong>Lưu ý:</strong> Nhớ thoát ra khi kết thúc phiên để đồng nghiệp khác truy cập nữa nhé![cite: 7]
+                                <i class="bi bi-info-circle-fill me-1"></i> <strong>Lưu ý:</strong> Nhớ thoát ra khi kết thúc phiên để đồng nghiệp khác truy cập nữa nhé!
                             </div>
 
                             <button id="btnTake" class="btn btn-custom-primary w-100 py-3">
@@ -198,7 +198,7 @@
 
                         <div id="releaseForm" style="display: none;">
                             <div class="alert alert-warning text-center border-0 bg-danger bg-opacity-10 text-danger p-3 rounded-3 mb-3 small" role="alert">
-                                <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Tài khoản đang được khóa. Cần xác thực đúng tên người đang dùng để kết thúc phiên![cite: 7]
+                                <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Tài khoản đang được khóa. Cần xác thực đúng tên người đang dùng để kết thúc phiên!
                             </div>
                             <button id="btnRelease" class="btn btn-custom-danger w-100 py-3">
                                 <i class="bi bi-box-arrow-left me-2"></i> Đã xong - Kết thúc phiên đăng nhập
@@ -209,7 +209,7 @@
                 </div>
 
                 <div class="text-center mt-3 text-muted small">
-                    <p><i class="bi bi-lightning-charge-fill text-warning"></i> Hệ thống tự động đồng bộ tức thì cho tất cả phòng ban.[cite: 7]</p>
+                    <p><i class="bi bi-lightning-charge-fill text-warning"></i> Hệ thống tự động đồng bộ tức thì cho tất cả phòng ban.</p>
                 </div>
 
             </div>
@@ -345,37 +345,4 @@
                 headerSection.classList.add('busy-header');
                 statusBadge.className = 'status-badge status-busy mb-4 w-100 text-center';
                 statusBadge.innerHTML = '<i class="bi bi-lock-fill me-2"></i>ĐANG BẬN - Tài khoản đang được sử dụng';
-                userInfo.classList.add('busy-info-box');
-                
-                document.getElementById('currentUserName').innerText = state.name;
-                document.getElementById('currentUserRoom').innerText = state.room;
-                document.getElementById('currentTime').innerText = state.time;
-                
-                if (state.expectedEndTime) {
-                    const expectedDate = new Date(state.expectedEndTime);
-                    document.getElementById('expectedEndTime').innerText = expectedDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                } else {
-                    document.getElementById('expectedEndTime').innerText = 'Không xác định';
-                }
-                
-                userInfo.style.display = 'block';
-                actionForm.style.display = 'none';
-                releaseForm.style.display = 'block';
-
-                startTimer(state.timestamp, state.expectedEndTime);
-            } else {
-                headerSection.classList.remove('busy-header');
-                statusBadge.className = 'status-badge status-free mb-4 w-100 text-center';
-                statusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>ĐANG TRỐNG - Có thể đăng nhập';
-                userInfo.classList.remove('busy-info-box');
-                
-                userInfo.style.display = 'none';
-                actionForm.style.display = 'block';
-                releaseForm.style.display = 'none';
-
-                if (timerInterval) clearInterval(timerInterval);
-            }
-        }
-    </script>
-</body>
-</html>
+                userInfo
