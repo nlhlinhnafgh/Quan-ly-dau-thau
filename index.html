@@ -4,11 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý tài khoản Đấu thầu quốc gia</title>
-    <!-- Bootstrap 5 CSS -->
+    <!-- Google Fonts & Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-status { transition: all 0.3s ease; }
+        body { 
+            background-color: #eef2f7; 
+            font-family: 'Inter', sans-serif; 
+            color: #334155;
+        }
+        .main-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .header-section {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .status-badge {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 1.05rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .status-free {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+            border: 1px solid #6ee7b7;
+        }
+        .status-busy {
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            border: 1px solid #fca5a5;
+        }
+        .info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+            border-color: #3b82f6;
+        }
+        .btn-custom-primary {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .btn-custom-primary:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+            transform: translateY(-1px);
+        }
+        .btn-custom-danger {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+        .btn-custom-danger:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+            transform: translateY(-1px);
+        }
+        label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
@@ -17,235 +104,85 @@
         <div class="row justify-content-center">
             <div class="col-md-7 col-lg-6">
                 
-                <!-- Tiêu đề -->
-                <div class="text-center mb-4">
-                    <h2 class="fw-bold text-primary">Hệ Thống Đấu Thầu Quốc Gia</h2>
-                    <p class="text-muted">Phòng Đấu thầu 1 & Phòng Đấu thầu 2</p>
-                </div>
-
-                <!-- Thẻ hiển thị trạng thái -->
-                <div id="statusCard" class="card shadow-sm card-status mb-4 border-success">
-                    <div class="card-body text-center p-4">
-                        <h4 class="card-title mb-3">Trạng thái tài khoản:</h4>
-                        <div id="statusBadge" class="badge bg-success fs-5 p-3 mb-3 w-100">ĐANG TRỐNG - Có thể đăng nhập</div>
-                        
-                        <div id="userInfo" class="text-muted mb-2" style="display: none;">
-                            <p class="mb-1">Người đang dùng: <strong id="currentUserName" class="text-dark"></strong></p>
-                            <p class="mb-1">Thuộc phòng: <strong id="currentUserRoom" class="text-dark"></strong></p>
-                            <p class="mb-1">Thời điểm vào: <strong id="currentTime" class="text-dark"></strong></p>
-                            <p class="mb-1">Dự kiến kết thúc: <strong id="expectedEndTime" class="text-dark"></strong> <span id="overdueWarning" class="text-danger fw-bold"></span></p>
-                            <p class="mb-0 text-danger fw-semibold">⏱️ Thời gian đã dùng: <span id="elapsedTime">0 phút 0 giây</span></p>
-                        </div>
+                <div class="card main-card">
+                    <!-- Tiêu đề Header -->
+                    <div class="header-section">
+                        <h3 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill me-2"></i>Hệ Thống Đấu Thầu Quốc Gia</h3>
+                        <p class="mb-0 text-white-50 small">Đồng bộ phiên làm việc Phòng Đấu thầu 1 & Phòng Đấu thầu 2</p>
                     </div>
-                </div>
 
-                <!-- Form thao tác -->
-                <div class="card shadow-sm">
-                    <div class="card-body p-4">
+                    <div class="card-body p-4 p-md-5">
+                        
+                        <!-- Thẻ hiển thị trạng thái -->
+                        <div class="mb-4 text-center">
+                            <div id="statusBadge" class="status-badge status-free mb-4">
+                                <i class="bi bi-check-circle-fill me-2"></i>ĐANG TRỐNG - Có thể đăng nhập
+                            </div>
+                            
+                            <div id="userInfo" class="info-box text-start" style="display: none;">
+                                <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                                    <div class="bg-danger bg-opacity-10 p-2 rounded-circle text-danger me-3">
+                                        <i class="bi bi-person-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-muted small d-block">Người đang giữ phiên</span>
+                                        <strong id="currentUserName" class="text-dark fs-6"></strong>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-2 small text-secondary">
+                                    <div class="col-6">
+                                        <p class="mb-1"><i class="bi bi-building me-1 text-primary"></i> Phòng: <strong id="currentUserRoom" class="text-dark"></strong></p>
+                                        <p class="mb-1"><i class="bi bi-clock me-1 text-primary"></i> Vào lúc: <strong id="currentTime" class="text-dark"></strong></p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="mb-1"><i class="bi bi-hourglass-split me-1 text-danger"></i> Dự kiến: <strong id="expectedEndTime" class="text-dark"></strong></p>
+                                        <p class="mb-0 text-danger fw-bold"><span id="overdueWarning"></span></p>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-2 border-top text-center bg-white rounded p-2">
+                                    <span class="text-muted small">⏱️ Thời gian đã dùng:</span> 
+                                    <span id="elapsedTime" class="fw-bold text-danger">0 phút 0 giây</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form thao tác -->
                         <div id="actionForm">
                             <div class="mb-3">
-                                <label for="fullName" class="form-label fw-semibold">Họ và tên người dùng:</label>
+                                <label for="fullName" class="form-label"><i class="bi bi-person me-1"></i> Họ và tên người dùng:</label>
                                 <input type="text" class="form-control" id="fullName" placeholder="Ví dụ: Nguyễn Văn A">
                             </div>
                             <div class="mb-3">
-                                <label for="roomName" class="form-label fw-semibold">Phòng ban:</label>
+                                <label for="roomName" class="form-label"><i class="bi bi-building me-1"></i> Phòng ban:</label>
                                 <select class="form-select" id="roomName">
                                     <option value="Phòng Đấu thầu 1">Phòng Đấu thầu 1</option>
                                     <option value="Phòng Đấu thầu 2">Phòng Đấu thầu 2</option>
                                 </select>
                             </div>
                             <!-- Trường bổ sung: Thời gian dự kiến -->
-                            <div class="mb-3">
-                                <label for="durationMinutes" class="form-label fw-semibold">Thời gian dự kiến (phút):</label>
+                            <div class="mb-4">
+                                <label for="durationMinutes" class="form-label"><i class="bi bi-clock-history me-1"></i> Thời gian dự kiến (phút):</label>
                                 <input type="number" class="form-control" id="durationMinutes" value="30" min="5" max="300">
-                                <div class="form-text">Nhập số phút bạn dự kiến thao tác để đồng nghiệp chủ động thời gian.</div>
+                                <div class="form-text text-muted small mt-1">Giúp đồng nghiệp biết khoảng thời gian bạn cần dùng.</div>
                             </div>
-                            <button id="btnTake" class="btn btn-primary w-100 py-2 fw-semibold">
-                                Đăng ký sử dụng / Đang đăng nhập
+                            <button id="btnTake" class="btn btn-custom-primary w-100 py-3">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Đăng ký sử dụng / Khóa phiên
                             </button>
                         </div>
 
                         <div id="releaseForm" style="display: none;">
-                            <div class="alert alert-warning text-center" role="alert">
-                                Tài khoản đang được sử dụng. Phải nhập đúng tên người đang dùng mới có thể kết thúc phiên!
+                            <div class="alert alert-warning text-center border-0 bg-warning bg-opacity-10 text-dark p-3 rounded-3 mb-3 small" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Tài khoản đang được khóa. Cần xác thực đúng tên người đang dùng để kết thúc phiên!
                             </div>
-                            <button id="btnRelease" class="btn btn-danger w-100 py-2 fw-semibold">
-                                Đã xong - Kết thúc phiên đăng nhập
+                            <button id="btnRelease" class="btn btn-custom-danger w-100 py-3">
+                                <i class="bi bi-box-arrow-left me-2"></i> Đã xong - Kết thúc phiên đăng nhập
                             </button>
                         </div>
+
                     </div>
                 </div>
 
                 <div class="text-center mt-3 text-muted small">
-                    <p>Hệ thống tự động đồng bộ tức thì cho tất cả mọi người.</p>
+                    <p><i class="bi bi-lightning-charge-fill text-warning"></i> Hệ thống tự động đồng bộ tức thì cho tất cả phòng ban.</p>
                 </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDK (Realtime Database trực tuyến) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            databaseURL: "https://quan-ly-dau-thau-fa988-default-rtdb.asia-southeast1.firebasedatabase.app/" 
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const stateRef = ref(db, 'dauthau/state');
-
-        let globalState = { isBusy: false, name: '', room: '', time: '', timestamp: 0, expectedEndTime: 0 };
-        let timerInterval = null;
-
-        onValue(stateRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data && data.isBusy) {
-                globalState = data;
-                updateUI(data);
-            } else {
-                globalState = { isBusy: false, name: '', room: '', time: '', timestamp: 0, expectedEndTime: 0 };
-                updateUI(globalState);
-            }
-        });
-
-        // Hàm chạy đồng hồ đếm thời gian và kiểm tra thời gian dự kiến
-        function startTimer(startTimestamp, expectedEndTime) {
-            if (timerInterval) clearInterval(timerInterval);
-            
-            const start = startTimestamp || Date.now();
-
-            timerInterval = setInterval(() => {
-                const now = Date.now();
-                const diffSec = Math.floor((now - start) / 1000);
-                
-                if (diffSec >= 0) {
-                    const hours = Math.floor(diffSec / 3600);
-                    const minutes = Math.floor((diffSec % 3600) / 60);
-                    const seconds = diffSec % 60;
-
-                    let timeString = '';
-                    if (hours > 0) timeString += `${hours} giờ `;
-                    if (minutes > 0 || hours > 0) timeString += `${minutes} phút `;
-                    timeString += `${seconds} giây`;
-
-                    const el = document.getElementById('elapsedTime');
-                    if (el) el.innerText = timeString;
-                }
-
-                // Kiểm tra xem đã vượt quá thời gian dự kiến chưa
-                const warningEl = document.getElementById('overdueWarning');
-                if (warningEl && expectedEndTime) {
-                    if (now > expectedEndTime) {
-                        warningEl.innerText = " (Đã quá thời gian dự kiến!)";
-                    } else {
-                        warningEl.innerText = "";
-                    }
-                }
-            }, 1000);
-        }
-
-        document.getElementById('btnTake').addEventListener('click', async function() {
-            const name = document.getElementById('fullName').value.trim();
-            const room = document.getElementById('roomName').value;
-            const duration = parseInt(document.getElementById('durationMinutes').value) || 30;
-
-            if (!name) {
-                alert('Vui lòng nhập họ và tên của bạn trước khi đăng ký!');
-                document.getElementById('fullName').focus();
-                return;
-            }
-
-            const currentTimestamp = Date.now();
-            const expectedEndTime = currentTimestamp + (duration * 60 * 1000);
-
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' ' + now.toLocaleDateString('vi-VN');
-
-            try {
-                await set(stateRef, {
-                    isBusy: true,
-                    name: name,
-                    room: room,
-                    time: timeString,
-                    timestamp: currentTimestamp,
-                    expectedEndTime: expectedEndTime
-                });
-            } catch (e) {
-                alert('Lỗi kết nối, vui lòng thử lại!');
-            }
-        });
-
-        document.getElementById('btnRelease').addEventListener('click', async function() {
-            let currentOwner = globalState.name || "Người dùng";
-            let inputName = prompt(`XÁC THỰC KẾT THÚC PHIÊN:\nVui lòng nhập chính xác Họ và tên người đang dùng ("${currentOwner}") để mở khóa:`);
-            
-            if (inputName === null) return;
-
-            if (inputName.trim().toLowerCase() !== currentOwner.toLowerCase()) {
-                alert('Tên xác nhận không chính xác! Bạn không có quyền kết thúc phiên của người khác.');
-                return;
-            }
-
-            try {
-                await set(stateRef, {
-                    isBusy: false,
-                    name: '',
-                    room: '',
-                    time: '',
-                    timestamp: 0,
-                    expectedEndTime: 0
-                });
-                document.getElementById('fullName').value = '';
-            } catch (e) {
-                alert('Lỗi kết nối, vui lòng thử lại!');
-            }
-        });
-
-        function updateUI(state) {
-            const statusCard = document.getElementById('statusCard');
-            const statusBadge = document.getElementById('statusBadge');
-            const userInfo = document.getElementById('userInfo');
-            const actionForm = document.getElementById('actionForm');
-            const releaseForm = document.getElementById('releaseForm');
-
-            if (state.isBusy) {
-                statusCard.className = 'card shadow-sm card-status mb-4 border-danger';
-                statusBadge.className = 'badge bg-danger fs-5 p-3 mb-3 w-100';
-                statusBadge.innerText = 'ĐANG BẬN - Có người đang sử dụng';
-                
-                document.getElementById('currentUserName').innerText = state.name;
-                document.getElementById('currentUserRoom').innerText = state.room;
-                document.getElementById('currentTime').innerText = state.time;
-                
-                // Hiển thị giờ dự kiến kết thúc
-                if (state.expectedEndTime) {
-                    const expectedDate = new Date(state.expectedEndTime);
-                    document.getElementById('expectedEndTime').innerText = expectedDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                } else {
-                    document.getElementById('expectedEndTime').innerText = 'Không xác định';
-                }
-                
-                userInfo.style.display = 'block';
-                actionForm.style.display = 'none';
-                releaseForm.style.display = 'block';
-
-                // Kích hoạt đồng hồ đếm giờ và theo dõi thời hạn
-                startTimer(state.timestamp, state.expectedEndTime);
-            } else {
-                statusCard.className = 'card shadow-sm card-status mb-4 border-success';
-                statusBadge.className = 'badge bg-success fs-5 p-3 mb-3 w-100';
-                statusBadge.innerText = 'ĐANG TRỐNG - Có thể đăng nhập';
-                
-                userInfo.style.display = 'none';
-                actionForm.style.display = 'block';
-                releaseForm.style.display = 'none';
-
-                if (timerInterval) clearInterval(timerInterval);
-            }
-        }
-    </script>
-</body>
-</html>
