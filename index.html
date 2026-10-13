@@ -149,7 +149,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Phần 1: Thời gian đã dùng (Nằm trên) -->
+                                <!-- Phần 1: Thời gian đã dùng -->
                                 <div class="pt-2 border-top border-danger border-opacity-25 text-center bg-white rounded p-2 mb-3">
                                     <span class="text-muted small">⏱️ Thời gian đã dùng:</span> 
                                     <span id="elapsedTime" class="fw-bold text-danger">0 phút 0 giây</span>
@@ -345,4 +345,37 @@
                 headerSection.classList.add('busy-header');
                 statusBadge.className = 'status-badge status-busy mb-4 w-100 text-center';
                 statusBadge.innerHTML = '<i class="bi bi-lock-fill me-2"></i>ĐANG BẬN - Tài khoản đang được sử dụng';
-                userInfo
+                userInfo.classList.add('busy-info-box');
+                
+                document.getElementById('currentUserName').innerText = state.name;
+                document.getElementById('currentUserRoom').innerText = state.room;
+                document.getElementById('currentTime').innerText = state.time;
+                
+                if (state.expectedEndTime) {
+                    const expectedDate = new Date(state.expectedEndTime);
+                    document.getElementById('expectedEndTime').innerText = expectedDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                } else {
+                    document.getElementById('expectedEndTime').innerText = 'Không xác định';
+                }
+                
+                userInfo.style.display = 'block';
+                actionForm.style.display = 'none';
+                releaseForm.style.display = 'block';
+
+                startTimer(state.timestamp, state.expectedEndTime);
+            } else {
+                headerSection.classList.remove('busy-header');
+                statusBadge.className = 'status-badge status-free mb-4 w-100 text-center';
+                statusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>ĐANG TRỐNG - Có thể đăng nhập';
+                userInfo.classList.remove('busy-info-box');
+                
+                userInfo.style.display = 'none';
+                actionForm.style.display = 'block';
+                releaseForm.style.display = 'none';
+
+                if (timerInterval) clearInterval(timerInterval);
+            }
+        }
+    </script>
+</body>
+</html>
