@@ -30,7 +30,6 @@
             text-align: center;
             transition: background 0.3s ease;
         }
-        /* Đồng bộ màu đỏ cho header khi bận */
         .header-section.busy-header {
             background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
         }
@@ -59,7 +58,6 @@
             padding: 20px;
             transition: all 0.3s ease;
         }
-        /* Đồng bộ màu đỏ nhạt cho info-box khi bận */
         .info-box.busy-info-box {
             background: #fff5f5;
             border: 1px solid #feb2b2;
@@ -148,7 +146,6 @@
                                         <p class="mb-1"><i class="bi bi-clock me-1 text-danger"></i> Vào lúc: <strong id="currentTime" class="text-dark"></strong></p>
                                     </div>
                                     <div class="col-6">
-                                        <!-- Đã đổi thành "Dự kiến kết thúc" -->
                                         <p class="mb-1"><i class="bi bi-hourglass-split me-1 text-danger"></i> Dự kiến kết thúc: <strong id="expectedEndTime" class="text-dark"></strong></p>
                                         <p class="mb-0 text-danger fw-bold"><span id="overdueWarning"></span></p>
                                     </div>
@@ -179,6 +176,12 @@
                                 <input type="number" class="form-control" id="durationMinutes" value="30" min="5" max="300">
                                 <div class="form-text text-muted small mt-1">Giúp đồng nghiệp biết khoảng thời gian bạn cần dùng.</div>
                             </div>
+
+                            <!-- Thêm lời nhắc nhở -->
+                            <div class="alert alert-info py-2 px-3 small rounded-3 mb-3" role="alert">
+                                <i class="bi bi-info-circle-fill me-1"></i> <strong>Lưu ý:</strong> Nhớ thoát ra khi kết thúc phiên để đồng nghiệp khác truy cập nữa nhé!
+                            </div>
+
                             <button id="btnTake" class="btn btn-custom-primary w-100 py-3">
                                 <i class="bi bi-box-arrow-in-right me-2"></i> Đăng ký sử dụng / Khóa phiên
                             </button>
